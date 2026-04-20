@@ -1,0 +1,85 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e3a8a);
+  color: white;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  padding: 15px;
+  padding-bottom: 70px;
+}
+
+.screen { display: none; }
+.active { display: block; }
+
+.card {
+  background: rgba(255,255,255,0.08);
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 12px;
+}
+
+.highlight {
+  border-left: 4px solid #22c55e;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin: 5px 0;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 5px;
+  background: #2563eb;
+  color: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+}
+
+th {
+  background: rgba(255,255,255,0.1);
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  background: rgba(2,6,23,0.95);
+}
+
+.bottom-nav button {
+  flex: 1;
+  background: none;
+  color: white;
+}

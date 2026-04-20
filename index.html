@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lecture Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- ✅ Firebase (MUST come BEFORE script.js) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- ✅ Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="main">
+
+    <!-- HOME -->
+    <div id="home" class="screen active">
+      <h1>Dashboard</h1>
+
+      <!-- LOGIN -->
+      <button onclick="login()">🔐 Login with Google</button>
+
+      <!-- DASHBOARD -->
+      <div class="card" id="dashboard"></div>
+
+      <!-- CHART -->
+      <div class="card">
+        <canvas id="chart"></canvas>
+      </div>
+
+      <!-- NEXT TASK -->
+      <div class="card highlight">
+        <h3>Next Task</h3>
+        <div id="nextLecture"></div>
+      </div>
+
+      <!-- DAILY TARGET -->
+      <div class="card">
+        <h3>🎯 Daily Target</h3>
+        <input type="number" id="dailyTargetInput" placeholder="Target">
+        <button onclick="setDailyTarget()">Set</button>
+        <div id="dailyStatus"></div>
+      </div>
+    </div>
+
+    <!-- SUBJECT -->
+    <div id="subjectScreen" class="screen">
+      <h1 id="subjectTitle"></h1>
+
+      <div class="card">
+        <input id="chapterName" placeholder="Chapter Name">
+        <input id="lectureCount" type="number" placeholder="Lectures">
+        <button onclick="addChapter()">Add Chapter</button>
+      </div>
+
+      <div id="chapterList"></div>
+    </div>
+
+    <!-- CHAPTER -->
+    <div id="chapterScreen" class="screen">
+      <h1 id="chapterTitle"></h1>
+      <div class="card">
+        <div id="lectureList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button onclick="goHome()">🏠</button>
+    <button onclick="openSubject('Physics')">⚡</button>
+    <button onclick="openSubject('Chemistry')">🧪</button>
+    <button onclick="openSubject('Maths')">📐</button>
+  </div>
+
+</div>
+
+<!-- ✅ YOUR SCRIPT (ALWAYS LAST) -->
+<script src="script.js"></script>
+
+</body>
+</html>
