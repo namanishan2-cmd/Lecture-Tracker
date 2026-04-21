@@ -60,23 +60,32 @@ function logout() {
 
 // ===== SAVE =====
 function save() {
-  if (userId) {
-    db.collection("users").doc(userId).set({
-      data: data,
-      todayDone: todayDone
-    });
-  }
+  if (!userId) return;
+
+  db.collection("users").doc(userId).set({
+    data: data,
+    todayDone: todayDone,
+todayTimeSpent: todayTimeSpent
+  }, { merge: true }); // 👈 IMPORTANT
 }
 
 
 // ===== REAL-TIME SYNC =====
 function loadCloudData() {
+  if (!userId) return;
+
   db.collection("users").doc(userId)
     .onSnapshot(doc => {
       if (doc.exists) {
         let d = doc.data();
-        data = d.data || data;
-        todayDone = d.todayDone || 0;
+
+        if (d.data) data = d.data;
+        if (d.todayDone !== undefined) todayDone = d.todayDone;
+
+
+        if (d.todayTimeSpent !== undefined) {
+  todayTimeSpent = d.todayTimeSpent;
+}
 
         updateAll();
       }
@@ -134,6 +143,9 @@ function addChapter() {
   data[currentSubject].push({ name, lectures: arr });
   save();
   renderChapters();
+  
+  chapterName.value = "";
+  lectureCount.value = "";
 }
 
 
@@ -145,25 +157,61 @@ function renderChapters() {
     let done = ch.lectures.filter(l => l.done).length;
 
     html += `
-      <div class="card" onclick="openChapter(${i})">
-        ${ch.name} (${done}/${ch.lectures.length})
-      </div>
-    `;
+  <div class="card" style="display:flex; flex-direction:column; gap:8px;">
+    
+    <div onclick="openChapter(${i})" style="cursor:pointer">
+      ${ch.name} (${done}/${ch.lectures.length})
+    </div>
+
+    <button 
+      onclick="event.stopPropagation(); deleteChapter(${i})"
+      style="background:#7f1d1d; color:white;">
+      Delete Chapter
+    </button>
+
+  </div>
+`;
+  });
+
+  chapterList.innerHTML = html;
+}
+function deleteChapter(index) {
+  if (!confirm("Delete this chapter permanently?")) return;
+
+  data[currentSubject].splice(index, 1);
+  save();
+  renderChapters();
+}
+function filterChapters(q) {
+  q = (q || "").toLowerCase();
+
+  let html = "";
+  data[currentSubject].forEach((ch, i) => {
+    if (ch.name.toLowerCase().includes(q)) {
+      let done = ch.lectures.filter(l => l.done).length;
+
+      html += `
+        <div class="card" onclick="openChapter(${i})">
+          ${ch.name} (${done}/${ch.lectures.length})
+        </div>
+      `;
+    }
   });
 
   chapterList.innerHTML = html;
 }
 
-
 // ===== LECTURE VIEW =====
 function openChapter(i) {
   currentChapter = i;
   let ch = data[currentSubject][i];
+  let doneCount = ch.lectures.filter(l => l.done).length;
 
   chapterTitle.innerText = ch.name;
 
   let html = `
-  <table>
+<h3>${doneCount}/${ch.lectures.length} completed</h3>
+<table>
   <tr>
     <th>Name</th><th>Done</th><th>DPP</th><th>No DPP</th><th>Rev1</th><th>Rev2</th>
   </tr>`;
@@ -184,6 +232,20 @@ function openChapter(i) {
 
   lectureList.innerHTML = html;
   show("chapterScreen");
+}
+function markAllDone() {
+  let ch = data[currentSubject][currentChapter];
+
+  ch.lectures.forEach(l => {
+    if (!l.done) {
+      l.done = true;
+      todayDone++;
+    }
+  });
+
+  save();
+  openChapter(currentChapter);
+  renderChapters();
 }
 
 
@@ -259,6 +321,41 @@ function updateNext() {
 
   nextLecture.innerText = "All done 🎉";
 }
+function showPending() {
+  let html = "";
+
+  for (let s in data) {
+    data[s].forEach(ch => {
+      ch.lectures.forEach(l => {
+        if (!l.done) {
+          html += `<div>${s} → ${ch.name} → ${l.name}</div>`;
+        }
+      });
+    });
+  }
+
+  if (!html) html = "All done 🎉";
+
+  alert(html);
+}
+function showWeak() {
+  let html = "";
+
+  for (let s in data) {
+    data[s].forEach(ch => {
+      let total = ch.lectures.length;
+      let done = ch.lectures.filter(l => l.done).length;
+
+      let p = total ? (done / total) * 100 : 0;
+
+      if (p < 40) {
+        html += `${s} → ${ch.name} (${Math.round(p)}%)\n`;
+      }
+    });
+  }
+
+  alert(html || "No weak chapters 🎉");
+}
 
 
 // ===== CHART =====
@@ -303,28 +400,52 @@ function updateAll() {
   updateDashboard();
   updateNext();
   renderChart();
+  updateTodayTime();   // 👈 ADD THIS
 }
 
-function logout() {
-  auth.signOut().then(() => {
-    userId = null;
-    document.getElementById("loginBtn").style.display = "block";
-    document.getElementById("userInfo").style.display = "none";
-  });
-}
 
-auth.onAuthStateChanged(user => {
-  if (user) {
-    userId = user.uid;
-
-    document.getElementById("loginBtn").style.display = "none";
-    document.getElementById("userInfo").style.display = "block";
-    document.getElementById("userName").innerText = user.displayName;
-
-    loadCloudData();
-  }
-});
 
 
 // ===== INIT =====
 updateAll();
+// ===== TIMER =====
+let timer = null;
+let seconds = 0;
+let todayTimeSpent = 0;
+
+function startTimer() {
+  if (timer) return;
+
+  timer = setInterval(() => {
+    seconds++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function stopTimer() {
+  if (!timer) return;
+
+  clearInterval(timer);
+  timer = null;
+
+  todayTimeSpent += seconds;
+  seconds = 0;
+
+  updateTodayTime();
+  save();
+}
+
+function updateTimerDisplay() {
+  let m = Math.floor(seconds / 60);
+  let s = seconds % 60;
+
+  timerDisplay.innerText =
+    String(m).padStart(2,'0') + ":" +
+    String(s).padStart(2,'0');
+}
+
+function updateTodayTime() {
+  let m = Math.floor(todayTimeSpent / 60);
+
+  todayTime.innerText = "Today: " + m + " min";
+}

@@ -345,3 +345,35 @@ h3 {
   border-radius: 10px;
   box-shadow: 0 0 10px #22c55e;
 }
+/* spacing */
+.card { margin-bottom: 10px; }
+
+/* nicer buttons */
+button {
+  transition: 0.2s;
+}
+button:hover {
+  opacity: 0.85;
+}
+
+/* input focus */
+input:focus {
+  outline: 1px solid #22c55e;
+}
+
+/* table better look */
+table {
+  width: 100%;
+  font-size: 13px;
+}
+td, th {
+  padding: 6px;
+}
+
+/* clickable cards */
+.card[onclick] {
+  cursor: pointer;
+}
+.card[onclick]:hover {
+  background: rgba(255,255,255,0.07);
+}

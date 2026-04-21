@@ -51,9 +51,24 @@
         <div id="nextLecture"></div>
       </div>
 
+      <div class="card">
+  <button onclick="showPending()">📌 Pending Work</button>
+  <button onclick="showWeak()">⚠️ Weak Chapters</button>
+</div>
+
       <!-- DAILY TARGET -->
       <div class="card">
         <h3>🎯 Daily Target</h3>
+        <div class="card">
+  <h3>⏱️ Study Timer</h3>
+
+  <div id="timerDisplay">00:00</div>
+
+  <button onclick="startTimer()">Start</button>
+  <button onclick="stopTimer()">Stop</button>
+
+  <div id="todayTime"></div>
+</div>
         <input type="number" id="dailyTargetInput" placeholder="Target">
         <button onclick="setDailyTarget()">Set</button>
         <div id="dailyStatus"></div>
@@ -66,11 +81,16 @@
   <div id="subjectScreen" class="screen">
     <h1 id="subjectTitle"></h1>
 
+    <button onclick="goHome()">⬅ Back</button>
+
     <div class="card">
       <input id="chapterName" placeholder="Chapter Name">
       <input id="lectureCount" type="number" placeholder="Lectures">
       <button onclick="addChapter()">Add Chapter</button>
     </div>
+    <div class="card">
+  <input id="searchChapter" placeholder="Search chapter..." oninput="filterChapters(this.value)">
+</div>
 
     <div id="chapterList"></div>
   </div>
@@ -78,7 +98,9 @@
   <!-- CHAPTER -->
   <div id="chapterScreen" class="screen">
     <h1 id="chapterTitle"></h1>
+    <button onclick="show('subjectScreen')">⬅ Back</button>
     <div class="card">
+      <button onclick="markAllDone()">✅ Mark All Done</button>
       <div id="lectureList"></div>
     </div>
   </div>
