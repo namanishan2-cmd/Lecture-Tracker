@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Lecture Tracker</title>
+  <title>Lecture Tracker • Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- CSS -->
@@ -52,59 +52,64 @@
       </div>
 
       <div class="card">
-  <button onclick="showPending()">📌 Pending Work</button>
-  <button onclick="showWeak()">⚠️ Weak Chapters</button>
+  <h3>📌 Quick Actions</h3>
+  <div class="btn-group">
+    <button type="button" onclick="showPending()">Pending</button>
+    <button type="button" onclick="showWeak()">Weak</button>
+  </div>
 </div>
 
-      <!-- DAILY TARGET -->
-      <div class="card">
-        <h3>🎯 Daily Target</h3>
-        <div class="card">
+<!-- DAILY TARGET -->
+<div class="card">
+  <h3>🎯 Daily Target</h3>
+  <input type="number" id="dailyTargetInput" placeholder="Target">
+  <button type="button" onclick="setDailyTarget()">Set</button>
+  <div id="dailyStatus"></div>
+</div>
+
+<!-- TIMER -->
+<div class="card">
+  <h3>⏱️ Study Timer</h3>
+  <div id="timerDisplay">00:00</div>
+  <button type="button" onclick="startTimer()">Start</button>
+  <button type="button" onclick="stopTimer()">Stop</button>
+  <div id="todayTime"></div>
+</div>
+
+<div class="card">
   <h3>📊 Daily Report</h3>
   <div id="dailyReport"></div>
 </div>
-        <div class="card">
-  <h3>⏱️ Study Timer</h3>
 
-  <div id="timerDisplay">00:00</div>
+</div> <!-- grid -->
+</div> <!-- home -->
 
-  <button onclick="startTimer()">Start</button>
-  <button onclick="stopTimer()">Stop</button>
-
-  <div id="todayTime"></div>
-</div>
-        <input type="number" id="dailyTargetInput" placeholder="Target">
-        <button onclick="setDailyTarget()">Set</button>
-        <div id="dailyStatus"></div>
-      </div>
-
-    </div>
-  </div>
 
   <!-- SUBJECT -->
   <div id="subjectScreen" class="screen">
+    <button type="button" onclick="goHome()">⬅ Back</button>
     <h1 id="subjectTitle"></h1>
 
-    <button onclick="goHome()">⬅ Back</button>
-
     <div class="card">
-      <input id="chapterName" placeholder="Chapter Name">
+      <input id="chapterName" placeholder="Enter chapter name...">
       <input id="lectureCount" type="number" placeholder="Lectures">
-      <button onclick="addChapter()">Add Chapter</button>
+      <button type="button" onclick="addChapter()">Add Chapter</button>
     </div>
     <div class="card">
   <input id="searchChapter" placeholder="Search chapter..." oninput="filterChapters(this.value)">
 </div>
 
-    <div id="chapterList"></div>
-  </div>
+    <div id="chapterList">
+  <div class="card">No chapters yet</div>
+ </div>
+</div> <!-- subjectScreen -->
 
   <!-- CHAPTER -->
   <div id="chapterScreen" class="screen">
+    <button type="button" onclick="show('subjectScreen')">⬅ Back</button>
     <h1 id="chapterTitle"></h1>
-    <button onclick="show('subjectScreen')">⬅ Back</button>
     <div class="card">
-      <button onclick="markAllDone()">✅ Mark All Done</button>
+      <button type="button" onclick="markAllDone()">✅ Mark All Done</button>
       <div id="lectureList"></div>
     </div>
   </div>
@@ -113,15 +118,22 @@
 
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
-    <button onclick="goHome()">🏠</button>
-    <button onclick="openSubject('Physics')">⚡</button>
-    <button onclick="openSubject('Chemistry')">🧪</button>
-    <button onclick="openSubject('Maths')">📐</button>
+    <button type="button" onclick="goHome()">🏠</button>
+    <button type="button" onclick="openSubject('Physics')">⚡</button>
+    <button type="button" onclick="openSubject('Chemistry')">🧪</button>
+    <button type="button" onclick="openSubject('Maths')">📐</button>
   </div>
 
 </div>
 
 <!-- ✅ YOUR SCRIPT (ALWAYS LAST) -->
+<div id="popup" class="popup hidden">
+  <div class="popup-content">
+    <h3 id="popupTitle"></h3>
+    <div id="popupBody"></div>
+    <button type="button" onclick="closePopup()">Close</button>
+  </div>
+</div>
 <script src="script.js"></script>
 
 </body>

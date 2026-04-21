@@ -1,3 +1,6 @@
+let unsubscribe = null;
+let saveTimeout = null;
+
 // ===== FIREBASE SETUP =====
 const firebaseConfig = {
   apiKey: "AIzaSyBV7G5SB-zmARjqhil8iEls6ZB-TvTmroc",
@@ -64,13 +67,17 @@ function logout() {
 function save() {
   if (!userId) return;
 
-  db.collection("users").doc(userId).set({
-    data: data,
-    todayDone: todayDone,
-    todayTimeSpent: todayTimeSpent,
-    dailyTarget: dailyTarget,
-    lastResetDate: lastResetDate
-  }, { merge: true });
+  clearTimeout(saveTimeout);
+
+  saveTimeout = setTimeout(() => {
+    db.collection("users").doc(userId).set({
+      data: data,
+      todayDone: todayDone,
+      todayTimeSpent: todayTimeSpent,
+      dailyTarget: dailyTarget,
+      lastResetDate: lastResetDate
+    }, { merge: true });
+  }, 500);
 }
 
 
@@ -78,25 +85,18 @@ function save() {
 function loadCloudData() {
   if (!userId) return;
 
-  db.collection("users").doc(userId)
+  if (unsubscribe) unsubscribe(); // remove old listener
+
+  unsubscribe = db.collection("users").doc(userId)
     .onSnapshot(doc => {
       if (doc.exists) {
         let d = doc.data();
 
         if (d.data) data = d.data;
         if (d.todayDone !== undefined) todayDone = d.todayDone;
-        
-
-
-        if (d.todayTimeSpent !== undefined) {
-  todayTimeSpent = d.todayTimeSpent;
-}
-        if (d.dailyTarget !== undefined) {
-  dailyTarget = d.dailyTarget;
-}
-if (d.lastResetDate !== undefined) {
-  lastResetDate = d.lastResetDate;
-}
+        if (d.todayTimeSpent !== undefined) todayTimeSpent = d.todayTimeSpent;
+        if (d.dailyTarget !== undefined) dailyTarget = d.dailyTarget;
+        if (d.lastResetDate !== undefined) lastResetDate = d.lastResetDate;
 
         updateAll();
       }
@@ -126,7 +126,7 @@ function goHome() {
 
 function openSubject(s) {
   currentSubject = s;
-  subjectTitle.innerText = s;
+  document.getElementById("subjectTitle").innerText = s;
   renderChapters();
   show("subjectScreen");
 }
@@ -134,9 +134,15 @@ function openSubject(s) {
 
 // ===== CHAPTER =====
 function addChapter() {
-  let name = chapterName.value;
-  let n = parseInt(lectureCount.value);
-  if (!name || !n) return;
+  
+  if (!currentSubject) {
+  alert("Select a subject first");
+  return;
+}
+  let name = document.getElementById("chapterName").value;
+let n = parseInt(document.getElementById("lectureCount").value);
+
+if (!name || !n) return;
 
   let arr = [];
 
@@ -155,8 +161,9 @@ function addChapter() {
   save();
   renderChapters();
 
-  chapterName.value = "";
-  lectureCount.value = "";
+  document.getElementById("chapterName").value = "";
+  document.getElementById("lectureCount").value = "";
+
 }
 
 
@@ -184,7 +191,13 @@ function renderChapters() {
 `;
   });
 
-  chapterList.innerHTML = html;
+   if (data[currentSubject].length === 0) {
+  document.getElementById("chapterList").innerHTML =
+    "<div class='card'>No chapters yet</div>";
+  return;
+}
+  document.getElementById("chapterList").innerHTML = html;
+ 
 }
 function deleteChapter(index) {
   if (!confirm("Delete this chapter permanently?")) return;
@@ -209,7 +222,7 @@ function filterChapters(q) {
     }
   });
 
-  chapterList.innerHTML = html;
+  document.getElementById("chapterList").innerHTML = html;
 }
 
 // ===== LECTURE VIEW =====
@@ -218,8 +231,8 @@ function openChapter(i) {
   let ch = data[currentSubject][i];
   let doneCount = ch.lectures.filter(l => l.done).length;
 
-  chapterTitle.innerText = ch.name;
-
+  document.getElementById("chapterTitle").innerText = ch.name;
+  
   let html = `
 <h3>${doneCount}/${ch.lectures.length} completed</h3>
 <table>
@@ -241,7 +254,7 @@ function openChapter(i) {
 
   html += "</table>";
 
-  lectureList.innerHTML = html;
+  document.getElementById("lectureList").innerHTML = html;
   show("chapterScreen");
 }
 function markAllDone() {
@@ -264,15 +277,24 @@ function markAllDone() {
 function toggle(i, type) {
   let l = data[currentSubject][currentChapter].lectures[i];
 
-  if (type === "done" && !l.done) todayDone++;
+  if (type === "done") {
+    l.done = !l.done;
 
-  if (type === "rev1" && !l.done) return;
-  if (type === "rev2" && !l.rev1) return;
+    if (l.done) todayDone++;
+    else todayDone--;
 
-  l[type] = !l[type];
+  } else {
+    if (type === "rev1" && !l.done) return;
+    if (type === "rev2" && !l.rev1) return;
+
+    l[type] = !l[type];
+  }
 
   if (type === "noDpp" && l.noDpp) l.dpp = false;
   if (type === "dpp" && l.dpp) l.noDpp = false;
+
+  // safety
+  todayDone = Math.max(0, todayDone);
 
   save();
   openChapter(currentChapter);
@@ -313,7 +335,7 @@ function updateDashboard() {
     `;
   });
 
-  dashboard.innerHTML = html;
+  document.getElementById("dashboard").innerHTML = html;
 }
 
 
@@ -323,33 +345,33 @@ function updateNext() {
     for (let ch of data[s]) {
       for (let l of ch.lectures) {
         if (!l.done) {
-          nextLecture.innerText = `Next → ${s} → ${ch.name} → ${l.name}`;
+          document.getElementById("nextLecture").innerText = `Next → ${s} → ${ch.name} → ${l.name}`;
           return;
         }
       }
     }
   }
 
-  nextLecture.innerText = "All done 🎉";
+  document.getElementById("nextLecture").innerText = "All done 🎉";
 }
 function showPending() {
-  let list = [];
+  let html = "";
 
   for (let s in data) {
     data[s].forEach(ch => {
       ch.lectures.forEach(l => {
         if (!l.done) {
-          list.push(`${s} → ${ch.name} → ${l.name}`);
+          html += `<div style="margin-bottom:6px">${s} → ${ch.name} → ${l.name}</div>`;
         }
       });
     });
   }
 
-  alert(list.join("\n") || "All done 🎉");
+  showPopup("📌 Pending Work", html || "All done 🎉");
 }
 
 function showWeak() {
-  let list = [];
+  let html = "";
 
   for (let s in data) {
     data[s].forEach(ch => {
@@ -359,12 +381,12 @@ function showWeak() {
       let p = total ? (done / total) * 100 : 0;
 
       if (p < 40) {
-        list.push(`${s} → ${ch.name} (${Math.round(p)}%)`);
+        html += `<div style="margin-bottom:6px">${s} → ${ch.name} (${Math.round(p)}%)</div>`;
       }
     });
   }
 
-  alert(list.join("\n") || "No weak chapters 🎉");
+  showPopup("⚠️ Weak Chapters", html || "No weak chapters 🎉");
 }
 
 
@@ -386,11 +408,14 @@ function renderChart() {
 
   let ctx = document.getElementById("chart");
 
-  if (!ctx) return;
+  if (!ctx || typeof Chart === "undefined") return;
 
-  if (window.chart && typeof window.chart.destroy === "function") {
-    window.chart.destroy();
-  }
+  if (JSON.stringify(values) === JSON.stringify(window.lastChartData)) return;
+window.lastChartData = values;
+
+if (window.chart && typeof window.chart.destroy === "function") {
+  window.chart.destroy();
+}
 
   window.chart = new Chart(ctx, {
     type: "bar",
@@ -434,6 +459,7 @@ function startTimer() {
     seconds++;
     updateTimerDisplay();
   }, 1000);
+   
 }
 
 function stopTimer() {
@@ -525,5 +551,18 @@ function setDailyTarget() {
   save();
   updateDailyReport();
 }
-// ===== INIT =====
-updateAll();
+function showPopup(title, content) {
+  document.getElementById("popupTitle").innerText = title;
+  document.getElementById("popupBody").innerHTML = content;
+  document.getElementById("popup").classList.remove("hidden");
+}
+
+function closePopup() {
+  document.getElementById("popup").classList.add("hidden");
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && timer) {
+    stopTimer();
+  }
+});
