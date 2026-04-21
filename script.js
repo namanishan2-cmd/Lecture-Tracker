@@ -28,6 +28,8 @@ let data = {
 let dailyTarget = 0;
 let todayDone = 0;
 
+let lastResetDate = null;
+
 
 // ===== LOGIN =====
 function login() {
@@ -65,8 +67,10 @@ function save() {
   db.collection("users").doc(userId).set({
     data: data,
     todayDone: todayDone,
-todayTimeSpent: todayTimeSpent
-  }, { merge: true }); // 👈 IMPORTANT
+    todayTimeSpent: todayTimeSpent,
+    dailyTarget: dailyTarget,
+    lastResetDate: lastResetDate
+  }, { merge: true });
 }
 
 
@@ -81,10 +85,17 @@ function loadCloudData() {
 
         if (d.data) data = d.data;
         if (d.todayDone !== undefined) todayDone = d.todayDone;
+        
 
 
         if (d.todayTimeSpent !== undefined) {
   todayTimeSpent = d.todayTimeSpent;
+}
+        if (d.dailyTarget !== undefined) {
+  dailyTarget = d.dailyTarget;
+}
+if (d.lastResetDate !== undefined) {
+  lastResetDate = d.lastResetDate;
 }
 
         updateAll();
@@ -143,7 +154,7 @@ function addChapter() {
   data[currentSubject].push({ name, lectures: arr });
   save();
   renderChapters();
-  
+
   chapterName.value = "";
   lectureCount.value = "";
 }
@@ -322,24 +333,23 @@ function updateNext() {
   nextLecture.innerText = "All done 🎉";
 }
 function showPending() {
-  let html = "";
+  let list = [];
 
   for (let s in data) {
     data[s].forEach(ch => {
       ch.lectures.forEach(l => {
         if (!l.done) {
-          html += `<div>${s} → ${ch.name} → ${l.name}</div>`;
+          list.push(`${s} → ${ch.name} → ${l.name}`);
         }
       });
     });
   }
 
-  if (!html) html = "All done 🎉";
-
-  alert(html);
+  alert(list.join("\n") || "All done 🎉");
 }
+
 function showWeak() {
-  let html = "";
+  let list = [];
 
   for (let s in data) {
     data[s].forEach(ch => {
@@ -349,12 +359,12 @@ function showWeak() {
       let p = total ? (done / total) * 100 : 0;
 
       if (p < 40) {
-        html += `${s} → ${ch.name} (${Math.round(p)}%)\n`;
+        list.push(`${s} → ${ch.name} (${Math.round(p)}%)`);
       }
     });
   }
 
-  alert(html || "No weak chapters 🎉");
+  alert(list.join("\n") || "No weak chapters 🎉");
 }
 
 
@@ -397,23 +407,27 @@ function renderChart() {
 
 // ===== MASTER UPDATE =====
 function updateAll() {
+  checkDailyReset();   // 👈 ADD THIS FIRST
+
   updateDashboard();
   updateNext();
   renderChart();
-  updateTodayTime();   // 👈 ADD THIS
+  updateTodayTime();
+  updateDailyReport();
 }
 
 
 
 
-// ===== INIT =====
-updateAll();
+
 // ===== TIMER =====
 let timer = null;
 let seconds = 0;
 let todayTimeSpent = 0;
 
 function startTimer() {
+  console.log("Start clicked");
+
   if (timer) return;
 
   timer = setInterval(() => {
@@ -434,18 +448,82 @@ function stopTimer() {
   updateTodayTime();
   save();
 }
+function checkDailyReset() {
+  let now = new Date();
+
+  let today = now.toDateString();
+
+  // create today's 4 AM
+  let resetTime = new Date();
+  resetTime.setHours(4, 0, 0, 0);
+
+  // if before 4 AM → treat as previous day
+  if (now < resetTime) {
+    resetTime.setDate(resetTime.getDate() - 1);
+    today = resetTime.toDateString();
+  }
+
+  if (lastResetDate !== today) {
+    todayDone = 0;
+    todayTimeSpent = 0;
+
+    lastResetDate = today;
+
+    save();
+  }
+}
+
 
 function updateTimerDisplay() {
   let m = Math.floor(seconds / 60);
   let s = seconds % 60;
 
-  timerDisplay.innerText =
+  let el = document.getElementById("timerDisplay");
+  if (!el) return;
+
+  el.innerText =
     String(m).padStart(2,'0') + ":" +
     String(s).padStart(2,'0');
 }
-
 function updateTodayTime() {
   let m = Math.floor(todayTimeSpent / 60);
 
-  todayTime.innerText = "Today: " + m + " min";
+  let el = document.getElementById("todayTime");
+  if (!el) return;
+
+  el.innerText = "Today: " + m + " min";
 }
+function updateDailyReport() {
+  let report = "";
+
+  // lectures
+  report += "📚 Lectures Done: " + todayDone + "<br>";
+
+  // time
+  let minutes = Math.floor(todayTimeSpent / 60);
+  report += "⏱️ Time Studied: " + minutes + " min<br>";
+
+  // target
+  if (dailyTarget > 0) {
+    let percent = Math.round((todayDone / dailyTarget) * 100);
+    report += "🎯 Target: " + todayDone + "/" + dailyTarget + " (" + percent + "%)<br>";
+
+    if (percent >= 100) {
+      report += "🔥 Great job!";
+    } else if (percent >= 60) {
+      report += "👍 Decent, push more";
+    } else {
+      report += "⚠️ Needs focus";
+    }
+  }
+
+  document.getElementById("dailyReport").innerHTML = report;
+}
+function setDailyTarget() {
+  dailyTarget = parseInt(document.getElementById("dailyTargetInput").value) || 0;
+
+  save();
+  updateDailyReport();
+}
+// ===== INIT =====
+updateAll();
