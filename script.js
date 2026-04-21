@@ -38,6 +38,24 @@ function login() {
     loadCloudData();
   });
 }
+auth.onAuthStateChanged(user => {
+  if (user) {
+    userId = user.uid;
+
+    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("userInfo").style.display = "block";
+    document.getElementById("userName").innerText = user.displayName;
+
+    loadCloudData();
+  } else {
+    document.getElementById("loginBtn").style.display = "block";
+    document.getElementById("userInfo").style.display = "none";
+  }
+});
+
+function logout() {
+  auth.signOut();
+}
 
 
 // ===== SAVE =====
@@ -68,8 +86,17 @@ function loadCloudData() {
 
 // ===== UI =====
 function show(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".screen").forEach(s => {
+    s.classList.remove("active");
+    s.style.display = "none";   // hard force
+  });
+
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add("active");
+    el.style.display = "block";
+    window.scrollTo(0, 0); // jump to top so it feels like a page switch
+  }
 }
 
 function goHome() {
@@ -201,7 +228,16 @@ function updateDashboard() {
 
     let p = total ? Math.round(done/total*100) : 0;
 
-    html += `<div>${s}: ${p}%</div>`;
+    // 👇 REPLACE THIS PART
+    html += `
+    <div>
+      <div style="margin-bottom:6px">${s} - ${p}%</div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${p}%"></div>
+      </div>
+    </div>
+    `;
   });
 
   dashboard.innerHTML = html;
@@ -243,13 +279,20 @@ function renderChart() {
 
   let ctx = document.getElementById("chart");
 
-  if (window.chart) window.chart.destroy();
+  if (!ctx) return;
+
+  if (window.chart && typeof window.chart.destroy === "function") {
+    window.chart.destroy();
+  }
 
   window.chart = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ data: values }]
+      datasets: [{
+        label: "Progress %",
+        data: values
+      }]
     }
   });
 }
@@ -261,6 +304,26 @@ function updateAll() {
   updateNext();
   renderChart();
 }
+
+function logout() {
+  auth.signOut().then(() => {
+    userId = null;
+    document.getElementById("loginBtn").style.display = "block";
+    document.getElementById("userInfo").style.display = "none";
+  });
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    userId = user.uid;
+
+    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("userInfo").style.display = "block";
+    document.getElementById("userName").innerText = user.displayName;
+
+    loadCloudData();
+  }
+});
 
 
 // ===== INIT =====

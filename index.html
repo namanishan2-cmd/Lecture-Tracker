@@ -22,12 +22,20 @@
 
   <div class="main">
 
-    <!-- HOME -->
-    <div id="home" class="screen active">
-      <h1>Dashboard</h1>
+  <!-- HOME -->
+  <div id="home" class="screen active">
+    <h1>Dashboard</h1>
+
+    <div class="grid">
 
       <!-- LOGIN -->
-      <button onclick="login()">🔐 Login with Google</button>
+      <div id="authSection" class="card">
+        <button id="loginBtn" onclick="login()">🔐 Login</button>
+        <div id="userInfo" style="display:none;">
+          <span id="userName"></span>
+          <button onclick="logout()">Logout</button>
+        </div>
+      </div>
 
       <!-- DASHBOARD -->
       <div class="card" id="dashboard"></div>
@@ -50,30 +58,32 @@
         <button onclick="setDailyTarget()">Set</button>
         <div id="dailyStatus"></div>
       </div>
+
     </div>
-
-    <!-- SUBJECT -->
-    <div id="subjectScreen" class="screen">
-      <h1 id="subjectTitle"></h1>
-
-      <div class="card">
-        <input id="chapterName" placeholder="Chapter Name">
-        <input id="lectureCount" type="number" placeholder="Lectures">
-        <button onclick="addChapter()">Add Chapter</button>
-      </div>
-
-      <div id="chapterList"></div>
-    </div>
-
-    <!-- CHAPTER -->
-    <div id="chapterScreen" class="screen">
-      <h1 id="chapterTitle"></h1>
-      <div class="card">
-        <div id="lectureList"></div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- SUBJECT -->
+  <div id="subjectScreen" class="screen">
+    <h1 id="subjectTitle"></h1>
+
+    <div class="card">
+      <input id="chapterName" placeholder="Chapter Name">
+      <input id="lectureCount" type="number" placeholder="Lectures">
+      <button onclick="addChapter()">Add Chapter</button>
+    </div>
+
+    <div id="chapterList"></div>
+  </div>
+
+  <!-- CHAPTER -->
+  <div id="chapterScreen" class="screen">
+    <h1 id="chapterTitle"></h1>
+    <div class="card">
+      <div id="lectureList"></div>
+    </div>
+  </div>
+
+</div>
 
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
